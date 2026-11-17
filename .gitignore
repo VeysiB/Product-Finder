@@ -1,0 +1,20 @@
+﻿# .NET
+bin/
+obj/
+.vs/
+*.user
+*.suo
+TestResults/
+
+# Node.js (tools/ozdisan derleme sırasında otomatik hazırlanır)
+node_modules/
+tools/ozdisan/dist/
+coverage/
+*.log
+*.tgz
+
+# İşletim sistemi / editör
+.DS_Store
+Thumbs.db
+.env
+.idea/

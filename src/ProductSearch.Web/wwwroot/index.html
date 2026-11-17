@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ürün Arama</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --panel: #ffffff; --text: #1d2330; --muted: #667085; --border: #e3e6eb;
+    --accent: #2f6fed; --accent-text: #ffffff; --chip: #eef2f8; --good: #137a4b; --warn-bg: #fff6e5; --warn: #8a5a00;
+    --hb: #ff6000; --ty: #f27a1a; --idx: #e4002b; --ak: #5b6b85;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151b; --panel: #1b1f27; --text: #e7eaf0; --muted: #98a2b3; --border: #2b313c;
+      --accent: #5b8cff; --chip: #262c37; --good: #4cc38a; --warn-bg: #3a2e14; --warn: #f2c26b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 16px 24px; background: var(--panel); border-bottom: 1px solid var(--border); display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0; }
+  header p { margin: 0; color: var(--muted); }
+  .layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; padding: 20px 24px; max-width: 1500px; margin: 0 auto; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; padding: 16px; } }
+  aside { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; align-self: start; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; }
+  @media (max-width: 900px) { aside { position: static; max-height: none; } }
+  fieldset { border: 0; padding: 0; margin: 0 0 16px; }
+  legend, label.title { font-weight: 600; margin-bottom: 6px; display: block; }
+  input[type=text], input[type=number], select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--bg); color: var(--text); font: inherit; }
+  .row { display: flex; gap: 8px; }
+  .checks { display: flex; flex-wrap: wrap; gap: 6px; }
+  .checks label { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; background: var(--chip); border-radius: 999px; cursor: pointer; user-select: none; }
+  .checks label small { color: var(--muted); }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  button { font: inherit; cursor: pointer; border-radius: 7px; border: 1px solid var(--border); padding: 9px 14px; background: var(--panel); color: var(--text); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; width: 100%; }
+  button:disabled { opacity: .6; cursor: progress; }
+  main { min-width: 0; }
+  .status { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; color: var(--muted); }
+  .sitelinks a { margin-right: 10px; }
+  .warn { background: var(--warn-bg); color: var(--warn); padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; display: grid; grid-template-columns: 96px 1fr; gap: 14px; }
+  @media (max-width: 600px) { .card { grid-template-columns: 1fr; } }
+  .card img { width: 96px; height: 96px; object-fit: contain; background: #fff; border-radius: 8px; }
+  .card .noimg { width: 96px; height: 96px; border-radius: 8px; background: var(--chip); }
+  @media (max-width: 600px) { .card .noimg { display: none; } }
+  .card h3 { margin: 0 0 6px; font-size: 15px; }
+  .meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .chip { background: var(--chip); padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+  .chip.os { background: var(--accent); color: var(--accent-text); }
+  .price { color: var(--good); font-weight: 700; font-size: 16px; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 6px 4px; border-top: 1px solid var(--border); vertical-align: middle; }
+  td.p { text-align: right; font-weight: 600; white-space: nowrap; }
+  td.l { text-align: right; white-space: nowrap; width: 1%; }
+  .site { display: inline-block; min-width: 92px; padding: 2px 8px; border-radius: 6px; color: #fff; font-size: 12px; font-weight: 600; text-align: center; }
+  .site.Hepsiburada { background: var(--hb); } .site.Trendyol { background: var(--ty); } .site.Idefix { background: var(--idx); } .site.Akakce { background: var(--ak); }
+  a { color: var(--accent); }
+  .empty { text-align: center; color: var(--muted); padding: 48px 12px; }
+  .spinner { width: 18px; height: 18px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .more { background: none; border: 0; color: var(--accent); padding: 4px 0; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+  .tabs a { text-decoration: none; color: var(--text); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; line-height: 1.2; font-weight: 600; }
+  .tabs a small { font-weight: 400; color: var(--muted); font-size: 11px; }
+  .tabs a[aria-selected=true] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  .tabs a[aria-selected=true] small { color: var(--accent-text); opacity: .85; }
+  @media (max-width: 700px) { .tabs { margin-left: 0; width: 100%; } .tabs a { flex: 1; } }
+</style>
+<link rel="stylesheet" href="ozdisan.css">
+</head>
+<body>
+<header>
+  <h1>Ürün Arama</h1>
+  <nav class="tabs" role="tablist">
+    <a href="#magaza" role="tab" data-view="shop">Mağaza Karşılaştırma <small>Hepsiburada · Trendyol · Idefix · Akakçe</small></a>
+    <a href="#ozdisan" role="tab" data-view="ozdisan">Özdisan Elektronik <small>komponent · BOM · datasheet</small></a>
+  </nav>
+</header>
+
+<section id="view-ozdisan" class="view" hidden></section>
+
+<section id="view-shop" class="view">
+<div class="layout">
+  <aside>
+    <form id="form">
+      <fieldset>
+        <label class="title" for="query">Ürün adı</label>
+        <input type="text" id="query" placeholder="örn. laptop, iphone 15, robot süpürge" required>
+      </fieldset>
+
+      <fieldset>
+        <label class="title" for="category">Kategori</label>
+        <select id="category"><option value="">Tümü</option></select>
+        <div class="hint">Aramadan sonra dolar; aksesuarları elemek için kullanın.</div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Marka</legend>
+        <div class="checks" id="brands"></div>
+        <input type="text" id="brandFree" placeholder="Başka marka (virgülle ayırın)" style="margin-top:6px">
+      </fieldset>
+
+      <fieldset>
+        <label class="title" for="model">Model</label>
+        <input type="text" id="model" placeholder="örn. ideapad slim 3, galaxy s24">
+      </fieldset>
+
+      <fieldset>
+        <legend>İşletim sistemi</legend>
+        <div class="checks" id="os"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Fiyat (TL)</legend>
+        <div class="row">
+          <input type="number" id="minPrice" placeholder="En az" min="0">
+          <input type="number" id="maxPrice" placeholder="En çok" min="0">
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Siteler</legend>
+        <div class="checks" id="sites"></div>
+      </fieldset>
+
+      <fieldset id="specsBox" hidden>
+        <legend>Özellikler</legend>
+        <div id="specs"></div>
+      </fieldset>
+
+      <fieldset>
+        <div class="row">
+          <div style="flex:1">
+            <label class="title" for="sort">Sıralama</label>
+            <select id="sort">
+              <option value="Relevance">En uygun (alaka)</option>
+              <option value="PriceAsc">Fiyat (artan)</option>
+              <option value="PriceDesc">Fiyat (azalan)</option>
+            </select>
+          </div>
+          <div style="width:110px">
+            <label class="title" for="maxProducts">Sonuç sayısı</label>
+            <input type="number" id="maxProducts" value="15" min="1" max="40">
+          </div>
+        </div>
+        <div class="checks" style="margin-top:10px">
+          <label><input type="checkbox" id="excludeAccessories" checked> Aksesuarları gizle (kılıf, koruyucu, "uyumlu"…)</label>
+        </div>
+      </fieldset>
+
+      <button class="primary" id="go" type="submit">Ara</button>
+      <button type="button" id="reset" style="width:100%;margin-top:8px">Filtreleri temizle</button>
+    </form>
+  </aside>
+
+  <main>
+    <div class="status" id="status"></div>
+    <div id="warnings"></div>
+    <div id="results"><div class="empty">Ürün adını yazıp filtreleri seçin, ardından <b>Ara</b>'ya basın.</div></div>
+  </main>
+</div>
+</section>
+
+<script>
+// Üst sekmeler: #magaza / #ozdisan
+(function () {
+  const show = () => {
+    const view = location.hash === "#ozdisan" || location.hash.startsWith("#ozdisan/") ? "ozdisan" : "shop";
+    document.querySelectorAll(".view").forEach(v => v.hidden = v.id !== "view-" + view);
+    document.querySelectorAll(".tabs a").forEach(a => a.setAttribute("aria-selected", a.dataset.view === view));
+    document.title = view === "ozdisan" ? "Özdisan · Ürün Arama" : "Ürün Arama";
+    if (view === "ozdisan" && window.Ozdisan) window.Ozdisan.activate();
+  };
+  window.addEventListener("hashchange", show);
+  window.addEventListener("DOMContentLoaded", show);
+})();
+</script>
+<script src="ozdisan.js"></script>
+
+<script>
+const $ = id => document.getElementById(id);
+const SITES = [["Hepsiburada","Hepsiburada"],["Trendyol","Trendyol"],["Idefix","Idefix"],["Akakce","Diğer satıcılar (Akakçe)"]];
+const LINK_NOTES = {
+  Akakce: "(Akakçe üzerinden)",
+  SiteSearch: "(sitede ürün adıyla arama)",
+};
+const fmt = n => n == null ? "-" : n.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " TL";
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+let osNames = {};
+let known = { query: "", categories: new Map(), brands: new Map(), specs: {} };
+
+function checkbox(container, name, value, label, checked, count) {
+  const l = document.createElement("label");
+  l.innerHTML = `<input type="checkbox" name="${name}" value="${esc(value)}" ${checked ? "checked" : ""}> ${esc(label)}` +
+                (count ? ` <small>${count}</small>` : "");
+  container.appendChild(l);
+}
+const checked = name => [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(i => i.value);
+
+async function init() {
+  SITES.forEach(([v, l]) => checkbox($("sites"), "site", v, l, true));
+  try {
+    const os = await (await fetch("/api/os")).json();
+    os.forEach(o => { osNames[o.value] = o.label; checkbox($("os"), "os", o.value, o.label, false); });
+  } catch { $("os").textContent = "Yüklenemedi"; }
+  renderBrands();
+}
+
+function merge(map, facetValues) { (facetValues || []).forEach(f => map.set(f.value, Math.max(map.get(f.value) || 0, f.count))); }
+
+function renderBrands() {
+  const selected = new Set(checked("brand"));
+  const box = $("brands"); box.innerHTML = "";
+  if (known.brands.size === 0) { box.innerHTML = '<span class="hint">Aramadan sonra markalar listelenir.</span>'; return; }
+  [...known.brands.entries()].sort((a, b) => b[1] - a[1]).slice(0, 24)
+    .forEach(([v, c]) => checkbox(box, "brand", v, v, selected.has(v), c));
+}
+
+function renderCategories() {
+  const sel = $("category"), cur = sel.value;
+  sel.innerHTML = '<option value="">Tümü</option>' +
+    [...known.categories.entries()].sort((a, b) => b[1] - a[1])
+      .map(([v, c]) => `<option value="${esc(v)}">${esc(v.replace(/-/g, " "))} (${c})</option>`).join("");
+  sel.value = cur;
+}
+
+function renderSpecs() {
+  const box = $("specs"), current = currentSpecs();
+  box.innerHTML = "";
+  const keys = Object.keys(known.specs);
+  $("specsBox").hidden = keys.length === 0;
+  keys.forEach(k => {
+    const id = "spec_" + k.replace(/\W/g, "_");
+    const wrap = document.createElement("div");
+    wrap.style.marginBottom = "8px";
+    const values = [...known.specs[k].entries()].sort((a, b) => b[1] - a[1]);
+    wrap.innerHTML = `<label class="hint" for="${id}">${esc(k)}</label>
+      <select id="${id}" data-spec="${esc(k)}"><option value="">Farketmez</option>${
+        values.map(([v, c]) => `<option value="${esc(v)}">${esc(v)} (${c})</option>`).join("")}</select>`;
+    box.appendChild(wrap);
+    if (current[k]) wrap.querySelector("select").value = current[k];
+  });
+}
+
+function currentSpecs() {
+  const r = {};
+  document.querySelectorAll("select[data-spec]").forEach(s => { if (s.value) r[s.dataset.spec] = s.value; });
+  return r;
+}
+
+function buildRequest() {
+  const brands = [...checked("brand"), ...$("brandFree").value.split(",").map(s => s.trim()).filter(Boolean)];
+  const num = id => $(id).value === "" ? null : Number($(id).value);
+  return {
+    query: $("query").value.trim(),
+    category: $("category").value || null,
+    brands, model: $("model").value.trim() || null,
+    operatingSystems: checked("os"),
+    minPrice: num("minPrice"), maxPrice: num("maxPrice"),
+    sites: checked("site"),
+    specs: currentSpecs(),
+    sort: $("sort").value,
+    excludeAccessories: $("excludeAccessories").checked,
+    maxProducts: Number($("maxProducts").value) || 15,
+    searchPages: 2,
+  };
+}
+
+async function search(e) {
+  e?.preventDefault();
+  const req = buildRequest();
+  if (!req.query) return;
+  if (req.query.toLocaleLowerCase("tr") !== known.query) {   // yeni ürün: eski seçenekleri sıfırla
+    known = { query: req.query.toLocaleLowerCase("tr"), categories: new Map(), brands: new Map(), specs: {} };
+    req.category = null; req.specs = {};
+    $("category").value = ""; $("specs").innerHTML = "";
+  }
+  $("go").disabled = true;
+  $("status").innerHTML = '<span class="spinner"></span> Akakçe taranıyor, satıcı teklifleri okunuyor…';
+  $("warnings").innerHTML = "";
+  try {
+    const res = await fetch("/api/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(req) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || res.statusText);
+
+    merge(known.categories, data.facets.categories);
+    merge(known.brands, data.facets.brands);
+    for (const [k, vals] of Object.entries(data.facets.specs || {})) merge(known.specs[k] ??= new Map(), vals);
+    renderCategories(); renderBrands(); renderSpecs();
+    render(data);
+  } catch (err) {
+    $("status").textContent = "";
+    $("results").innerHTML = `<div class="empty">Hata: ${esc(err.message)}</div>`;
+  } finally { $("go").disabled = false; }
+}
+
+function render(data) {
+  const offerCount = data.results.reduce((s, r) => s + r.offers.length, 0);
+  $("status").innerHTML = `<span><b>${data.results.length}</b> ürün, <b>${offerCount}</b> teklif · ${data.candidateCount} adaydan ${data.inspectedCount} tanesi incelendi${data.failedCount ? ` · <b>${data.failedCount}</b> okunamadı` : ""}</span>
+    <span class="sitelinks">Sitede ara: ${data.sites.map(s => `<a href="${esc(s.searchUrl)}" target="_blank" rel="noopener" title="${esc(s.status)}">${esc(s.site)}</a>`).join("")}</span>`;
+  $("warnings").innerHTML = (data.warnings || []).map(w => `<div class="warn">${esc(w)}</div>`).join("");
+
+  if (data.results.length === 0) {
+    $("results").innerHTML = '<div class="empty">Filtrelere uyan teklif bulunamadı. Yukarıdaki uyarıları kontrol edin; filtreleri gevşetmeyi ya da ürün adını değiştirmeyi deneyin.</div>';
+    return;
+  }
+  const keySpecs = ["RAM", "RAM Kapasitesi", "SSD", "Dahili Hafıza", "Ekran Boyutu", "İşlemci Serisi", "İşlemci Modeli", "Ekran Kartı Modeli"];
+  $("results").innerHTML = data.results.map((r, i) => {
+    const specs = keySpecs.filter(k => r.specs[k]).map(k => `<span class="chip">${esc(k)}: ${esc(r.specs[k])}</span>`).join("");
+    const rows = r.offers.map((o, j) => `<tr ${j >= 5 ? `class="extra-${i}" hidden` : ""}>
+        <td><span class="site ${o.site}">${esc(o.platform)}</span></td>
+        <td>${esc(o.merchant || "")} ${LINK_NOTES[o.linkKind] ? `<span class="hint">${LINK_NOTES[o.linkKind]}</span>` : ""}</td>
+        <td class="p">${fmt(o.price)}</td>
+        <td class="l"><a href="${esc(o.url)}" target="_blank" rel="noopener">Ürüne git ↗</a></td></tr>`).join("");
+    return `<article class="card">
+      ${r.imageUrl ? `<img src="${esc(r.imageUrl)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg'}))">` : `<div class="noimg"></div>`}
+      <div>
+        <h3>${esc(r.name)}</h3>
+        <div class="meta">
+          <span class="price">${fmt(r.bestPrice)}</span>
+          ${r.brand ? `<span class="chip">${esc(r.brand)}</span>` : ""}
+          ${r.operatingSystem ? `<span class="chip os">${esc(osNames[r.operatingSystem] || r.operatingSystem)}</span>` : ""}
+          ${specs}
+          <a class="chip" href="${esc(r.akakceUrl)}" target="_blank" rel="noopener">Akakçe'de karşılaştır ↗</a>
+        </div>
+        <table>${rows}</table>
+        ${r.offers.length > 5 ? `<button class="more" onclick="document.querySelectorAll('.extra-${i}').forEach(t=>t.hidden=false);this.remove()">+${r.offers.length - 5} teklif daha</button>` : ""}
+      </div></article>`;
+  }).join("");
+}
+
+$("form").addEventListener("submit", search);
+$("reset").addEventListener("click", () => {
+  document.querySelectorAll('input[name="brand"], input[name="os"]').forEach(i => i.checked = false);
+  document.querySelectorAll('input[name="site"]').forEach(i => i.checked = true);
+  ["brandFree", "model", "minPrice", "maxPrice"].forEach(id => $(id).value = "");
+  $("category").value = "";
+  document.querySelectorAll("select[data-spec]").forEach(s => s.value = "");
+});
+init();
+</script>
+</body>
+</html>

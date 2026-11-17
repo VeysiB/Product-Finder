@@ -1,0 +1,66 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\ProductSearch.Core\ProductSearch.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol" Version="2.4.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!--
+    Özdisan bileşeni (tools/ozdisan, Node.js/TypeScript) derleme sırasında otomatik hazırlanır:
+      - package-lock.json değiştiyse "npm ci" (bağımlılıklar)
+      - TypeScript kaynakları değiştiyse "npm run build" (dist/index.js)
+    Node.js yoksa derleme durmaz; uyarı verilir ve web arayüzündeki Özdisan sekmesi devre dışı kalır.
+    Atlamak için: dotnet build -p:SkipOzdisanBuild=true
+  -->
+  <PropertyGroup>
+    <OzdisanDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\tools\ozdisan'))\</OzdisanDir>
+    <SkipOzdisanBuild Condition="'$(SkipOzdisanBuild)' == ''">false</SkipOzdisanBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <OzdisanPackageFiles Include="$(OzdisanDir)package.json;$(OzdisanDir)package-lock.json" />
+    <OzdisanSourceFiles Include="$(OzdisanDir)src\**\*.ts;$(OzdisanDir)tsconfig.json;$(OzdisanDir)package.json" />
+  </ItemGroup>
+
+  <Target Name="OzdisanCheckNode"
+          BeforeTargets="Build"
+          Condition="'$(SkipOzdisanBuild)' != 'true' And '$(DesignTimeBuild)' != 'true' And Exists('$(OzdisanDir)package.json')">
+    <Exec Command="node --version" ContinueOnError="true" IgnoreExitCode="true" StandardOutputImportance="low" StandardErrorImportance="low" EchoOff="true">
+      <Output TaskParameter="ExitCode" PropertyName="OzdisanNodeExitCode" />
+    </Exec>
+    <PropertyGroup>
+      <OzdisanNodeAvailable Condition="'$(OzdisanNodeExitCode)' == '0'">true</OzdisanNodeAvailable>
+    </PropertyGroup>
+    <Warning Condition="'$(OzdisanNodeAvailable)' != 'true'"
+             Text="Node.js bulunamadı (https://nodejs.org, sürüm 22+). Özdisan sekmesi çalışmayacak; mağaza karşılaştırma bölümü etkilenmez. Node.js kurduktan sonra yeniden derleyin." />
+  </Target>
+
+  <Target Name="OzdisanNpmInstall"
+          AfterTargets="OzdisanCheckNode"
+          Condition="'$(OzdisanNodeAvailable)' == 'true'"
+          Inputs="@(OzdisanPackageFiles)"
+          Outputs="$(OzdisanDir)node_modules\.package-lock.json">
+    <Message Importance="high" Text="Özdisan: npm bağımlılıkları kuruluyor (ilk derlemede bir kez)..." />
+    <!-- "prepare" betiği burada TypeScript derlemesini de yapar -->
+    <Exec Command="npm ci --no-audit --no-fund" WorkingDirectory="$(OzdisanDir)" />
+  </Target>
+
+  <Target Name="OzdisanTsBuild"
+          AfterTargets="OzdisanNpmInstall"
+          Condition="'$(OzdisanNodeAvailable)' == 'true'"
+          Inputs="@(OzdisanSourceFiles)"
+          Outputs="$(OzdisanDir)dist\index.js">
+    <Message Importance="high" Text="Özdisan: TypeScript derleniyor..." />
+    <Exec Command="npm run build" WorkingDirectory="$(OzdisanDir)" />
+  </Target>
+
+</Project>
