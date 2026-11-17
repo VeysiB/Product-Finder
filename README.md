@@ -62,8 +62,8 @@ Gerekli paketler ilk derlemede otomatik iner; başka bir şey kurmanız gerekmez
 ### 2. Projeyi indirin ve açın
 
 ```powershell
-git clone https://github.com/<kullanici>/<depo>.git
-cd <depo>
+git clone https://github.com/VeysiB/Product-Finder.git
+cd Product-Finder
 code .
 ```
 
